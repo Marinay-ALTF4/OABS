@@ -1,0 +1,53 @@
+#-----------------------------
+# Dependencies
+#-----------------------------
+/vendor/
+
+#-----------------------------
+# Environment / local config
+#-----------------------------
+.env
+.env.*
+!.env.example
+
+#-----------------------------
+# Composer / PHP tooling cache
+#-----------------------------
+/.phpunit.result.cache
+/.php_cs.cache
+/.php-cs-fixer.cache
+
+#-----------------------------
+# CodeIgniter writable content
+# Keep folder structure with index.html and .htaccess
+#-----------------------------
+/writable/cache/*
+!/writable/cache/index.html
+
+/writable/debugbar/*
+!/writable/debugbar/index.html
+
+/writable/logs/*
+!/writable/logs/index.html
+
+/writable/session/*
+!/writable/session/index.html
+
+/writable/uploads/*
+!/writable/uploads/index.html
+
+#-----------------------------
+# Test artifacts
+#-----------------------------
+/tests/_output/
+/coverage/
+
+#-----------------------------
+# OS / IDE
+#-----------------------------
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
