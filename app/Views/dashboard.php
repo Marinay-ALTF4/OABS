@@ -26,6 +26,12 @@
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         <?php endif; ?>
+        <?php if (session('error')): ?>
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <?= esc(session('error')) ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        <?php endif; ?>
 
     <div class="row g-3 mb-4">
         <?php if (($user['role'] ?? '') === 'admin'): ?>
@@ -205,7 +211,12 @@
                 <div class="card border-0 shadow-sm">
                     <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
                         <h6 class="mb-0">Admin Panel</h6>
-                        <span class="badge bg-warning text-dark">Admin</span>
+                        <div class="d-flex align-items-center gap-2">
+                            <button class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                                <i class="bi bi-person-plus"></i> Add user
+                            </button>
+                            <span class="badge bg-warning text-dark">Admin</span>
+                        </div>
                     </div>
                     <div class="card-body">
                         <ul class="list-group list-group-flush">
@@ -313,6 +324,80 @@
         <?php endif; ?>
     </div>
 
+    <?php $addUserErrors = session('errors'); ?>
+    <?php if (($user['role'] ?? '') === 'admin'): ?>
+    <div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-0">
+                    <div>
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <span class="icon-circle"><i class="bi bi-person-plus"></i></span>
+                            <h5 class="modal-title mb-0" id="addUserModalLabel">Add a user</h5>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body pt-0">
+                    <?php if ($addUserErrors): ?>
+                        <div class="alert alert-danger py-2 small mb-3">
+                            <ul class="mb-0 ps-3">
+                                <?php foreach ($addUserErrors as $msg): ?>
+                                    <li><?= esc($msg) ?></li>
+                                <?php endforeach; ?>
+                            </ul>
+                        </div>
+                    <?php endif; ?>
+
+                    <form action="<?= site_url('admin/users/create') ?>" method="post" novalidate>
+                        <?= csrf_field() ?>
+
+                        <div class="mb-3">
+                            <label for="add_name" class="form-label">Full name</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-person"></i></span>
+                                <input type="text" class="form-control" id="add_name" name="name" value="<?= old('name') ?>" placeholder="Juan Dela Cruz" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="add_email" class="form-label">Email address</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                                <input type="email" class="form-control" id="add_email" name="email" value="<?= old('email') ?>" placeholder="you@example.com" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="add_password" class="form-label">Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                                <input type="password" class="form-control" id="add_password" name="password" placeholder="At least 6 characters" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="add_role" class="form-label">Role</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-shield-lock"></i></span>
+                                <select class="form-select" id="add_role" name="role" required>
+                                    <option value="admin" <?= old('role') === 'admin' ? 'selected' : '' ?>>Admin</option>
+                                    <option value="client" <?= old('role') === 'client' ? 'selected' : '' ?>>Client</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-accent text-white">Create user</button>
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+
     <!-- Appointment Details Modal -->
     <div class="modal fade" id="appointmentModal" tabindex="-1" aria-labelledby="appointmentModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
@@ -371,6 +456,37 @@
         align-items: center;
         justify-content: center;
         box-shadow: 0 10px 20px rgba(20, 184, 166, 0.2);
+    }
+    .icon-circle {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #14b8a6, #1e3a8a);
+        color: #fff;
+        box-shadow: 0 10px 20px rgba(20, 184, 166, 0.25);
+    }
+    .btn-accent {
+        background: linear-gradient(135deg, #14b8a6, #1e3a8a);
+        border: none;
+        box-shadow: 0 10px 24px rgba(30, 58, 138, 0.2);
+    }
+    .btn-accent:hover { background: linear-gradient(135deg, #0fa08f, #172c66); }
+    .input-group-text {
+        background: #fff;
+        border-right: 0;
+        color: #9ca3af;
+    }
+    .input-group .form-control,
+    .input-group .form-select {
+        border-left: 0;
+        padding-left: 0.5rem;
+    }
+    .form-control:focus, .form-select:focus {
+        box-shadow: 0 0 0 0.2rem rgba(20, 184, 166, 0.15);
+        border-color: #14b8a6;
     }
     .xsmall { font-size: 0.78rem; }
     .star-btn.active { background-color: #f59e0b; color: #fff; border-color: #f59e0b; }
@@ -461,6 +577,16 @@
             submitBtn.addEventListener('click', () => {
                 alert('Feedback submitted (demo only)');
             });
+        }
+    })();
+
+    // Auto-open add-user modal when validation errors are present
+    (function() {
+        const shouldOpen = <?= (($user['role'] ?? '') === 'admin' && ($addUserErrors || old('name') || old('email') || old('role'))) ? 'true' : 'false' ?>;
+        if (!shouldOpen) return;
+        const modalEl = document.getElementById('addUserModal');
+        if (modalEl && window.bootstrap) {
+            window.bootstrap.Modal.getOrCreateInstance(modalEl).show();
         }
     })();
 </script>

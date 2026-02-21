@@ -42,7 +42,7 @@
                         </div>
                     <?php endif; ?>
 
-                    <form action="<?= site_url('login') ?>" method="post" novalidate>
+                    <form id="authForm" action="<?= site_url('login') ?>" method="post" novalidate>
                         <?= csrf_field() ?>
 
                         <div class="mb-3">
@@ -52,6 +52,7 @@
                                 <input type="email" class="form-control" id="email" name="email"
                                        placeholder="you@example.com" value="<?= old('email') ?>" required>
                             </div>
+                            <div class="form-text text-danger small d-none" id="emailRule">Max 5 special characters and 8 numbers allowed.</div>
                         </div>
 
                         <div class="mb-3">
@@ -78,7 +79,7 @@
                     </form>
 
                     <p class="text-center text-muted small mt-3 mb-0">
-                        Don't have an account? <a href="#" class="text-decoration-none">Register</a>
+                        Don't have an account? <a href="<?= site_url('register') ?>" class="text-decoration-none">Register</a>
                     </p>
 
                 </div>
@@ -161,6 +162,72 @@
                     icon.classList.toggle('bi-eye-slash', isHidden);
                 }
                 toggle.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+            });
+        }
+    })();
+
+    // Client-side rules: email max 5 special characters & 8 digits; name allows letters/spaces/ñ only.
+    (function() {
+        const form = document.getElementById('authForm');
+        const emailInput = document.getElementById('email');
+        const emailRule = document.getElementById('emailRule');
+        const nameInput = document.getElementById('name'); // present only on register forms
+        const nameRuleText = 'Only letters, spaces, and ñ are allowed.';
+
+        const show = (el, msg) => {
+            if (!el) return;
+            if (msg) el.textContent = msg;
+            el.classList.remove('d-none');
+        };
+        const hide = (el) => el && el.classList.add('d-none');
+
+        const validateEmail = () => {
+            if (!emailInput) return true;
+            const val = emailInput.value || '';
+            const specials = (val.match(/[^a-zA-Z0-9]/g) || []).length; // count non-alphanumeric (includes @ and .)
+            const digits = (val.match(/\d/g) || []).length;
+            const ok = specials <= 5 && digits <= 8;
+            if (!ok) {
+                show(emailRule);
+                emailInput.classList.add('is-invalid');
+            } else {
+                hide(emailRule);
+                emailInput.classList.remove('is-invalid');
+            }
+            return ok;
+        };
+
+        const nameRuleEl = nameInput ? document.createElement('div') : null;
+        if (nameRuleEl && nameInput && nameInput.parentNode) {
+            nameRuleEl.className = 'form-text text-danger small d-none';
+            nameRuleEl.textContent = nameRuleText;
+            nameInput.parentNode.appendChild(nameRuleEl);
+        }
+
+        const validateName = () => {
+            if (!nameInput) return true;
+            const val = nameInput.value || '';
+            const ok = /^[A-Za-zñÑ\s]+$/.test(val);
+            if (!ok) {
+                show(nameRuleEl, nameRuleText);
+                nameInput.classList.add('is-invalid');
+            } else {
+                hide(nameRuleEl);
+                nameInput.classList.remove('is-invalid');
+            }
+            return ok;
+        };
+
+        if (emailInput) emailInput.addEventListener('input', validateEmail);
+        if (nameInput) nameInput.addEventListener('input', validateName);
+
+        if (form) {
+            form.addEventListener('submit', (e) => {
+                const okEmail = validateEmail();
+                const okName = validateName();
+                if (!okEmail || !okName) {
+                    e.preventDefault();
+                }
             });
         }
     })();
