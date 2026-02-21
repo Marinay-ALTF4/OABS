@@ -349,7 +349,7 @@
                         </div>
                     <?php endif; ?>
 
-                    <form action="<?= site_url('admin/users/create') ?>" method="post" novalidate>
+                    <form id="addUserForm" action="<?= site_url('admin/users/create') ?>" method="post" novalidate>
                         <?= csrf_field() ?>
 
                         <div class="mb-3">
@@ -358,6 +358,7 @@
                                 <span class="input-group-text"><i class="bi bi-person"></i></span>
                                 <input type="text" class="form-control" id="add_name" name="name" value="<?= old('name') ?>" placeholder="Juan Dela Cruz" required>
                             </div>
+                            <div class="form-text text-danger small d-none" id="addNameRule">Only letters, spaces, and ñ are allowed.</div>
                         </div>
 
                         <div class="mb-3">
@@ -366,6 +367,7 @@
                                 <span class="input-group-text"><i class="bi bi-envelope"></i></span>
                                 <input type="email" class="form-control" id="add_email" name="email" value="<?= old('email') ?>" placeholder="you@example.com" required>
                             </div>
+                            <div class="form-text text-danger small d-none" id="addEmailRule">Max 5 special characters and 8 numbers allowed.</div>
                         </div>
 
                         <div class="mb-3">
@@ -374,6 +376,7 @@
                                 <span class="input-group-text"><i class="bi bi-lock"></i></span>
                                 <input type="password" class="form-control" id="add_password" name="password" placeholder="At least 6 characters" required>
                             </div>
+                            <div class="form-text text-danger small d-none" id="addPasswordRule">Password must be at least 6 characters.</div>
                         </div>
 
                         <div class="mb-3">
@@ -578,6 +581,60 @@
                 alert('Feedback submitted (demo only)');
             });
         }
+    })();
+
+    // Add-user modal validation (matches login/register rules)
+    (function() {
+        const form = document.getElementById('addUserForm');
+        if (!form) return;
+
+        const nameInput = document.getElementById('add_name');
+        const nameRule = document.getElementById('addNameRule');
+        const emailInput = document.getElementById('add_email');
+        const emailRule = document.getElementById('addEmailRule');
+        const passInput = document.getElementById('add_password');
+        const passRule = document.getElementById('addPasswordRule');
+
+        const show = (el) => el && el.classList.remove('d-none');
+        const hide = (el) => el && el.classList.add('d-none');
+
+        const validateName = () => {
+            if (!nameInput) return true;
+            const ok = /^[A-Za-zñÑ\s]+$/.test(nameInput.value || '');
+            ok ? hide(nameRule) : show(nameRule);
+            nameInput.classList.toggle('is-invalid', !ok);
+            return ok;
+        };
+
+        const validateEmail = () => {
+            if (!emailInput) return true;
+            const val = emailInput.value || '';
+            const specials = (val.match(/[^a-zA-Z0-9]/g) || []).length;
+            const digits = (val.match(/\d/g) || []).length;
+            const ok = specials <= 5 && digits <= 8;
+            ok ? hide(emailRule) : show(emailRule);
+            emailInput.classList.toggle('is-invalid', !ok);
+            return ok;
+        };
+
+        const validatePass = () => {
+            if (!passInput) return true;
+            const ok = (passInput.value || '').length >= 6;
+            ok ? hide(passRule) : show(passRule);
+            passInput.classList.toggle('is-invalid', !ok);
+            return ok;
+        };
+
+        [nameInput, emailInput, passInput].forEach(el => el && el.addEventListener('input', () => {
+            validateName();
+            validateEmail();
+            validatePass();
+        }));
+
+        form.addEventListener('submit', (e) => {
+            const ok = validateName() & validateEmail() & validatePass();
+            if (!ok) e.preventDefault();
+        });
     })();
 
     // Auto-open add-user modal when validation errors are present
