@@ -20,12 +20,12 @@
         </div>
     </div>
 
-    <?php if (session('success')): ?>
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <?= esc(session('success')) ?>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    <?php endif; ?>
+        <?php if (session('success')): ?>
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <?= esc(session('success')) ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        <?php endif; ?>
 
     <div class="row g-3 mb-4">
         <?php if (($user['role'] ?? '') === 'admin'): ?>
@@ -72,6 +72,55 @@
                 </div>
             </div>
         <?php else: ?>
+            <?php
+            // Hardcoded sample appointments for UI demo only (no database calls).
+            $appointments = [
+                [
+                    'ref' => 'APT-2026-001',
+                    'date' => '2026-03-15 10:30',
+                    'service' => 'General Consultation',
+                    'status' => 'confirmed',
+                    'doctor' => 'Dr. Amelia Smith',
+                    'clinic' => 'OABS Main Clinic, 123 Health St.',
+                    'notes' => 'Bring previous reports and lab results.',
+                ],
+                [
+                    'ref' => 'APT-2026-002',
+                    'date' => '2026-03-01 15:00',
+                    'service' => 'Dermatology Check',
+                    'status' => 'pending',
+                    'doctor' => 'Dr. Brian Lee',
+                    'clinic' => 'Derm Wing, 2nd Floor',
+                    'notes' => 'Awaiting confirmation.',
+                ],
+                [
+                    'ref' => 'APT-2026-003',
+                    'date' => '2026-02-10 09:00',
+                    'service' => 'Dental Cleaning',
+                    'status' => 'completed',
+                    'doctor' => 'Dr. Carla Cruz',
+                    'clinic' => 'Dental Suite, Room 5',
+                    'notes' => 'Completed successfully.',
+                ],
+            ];
+
+            // Badge colors for statuses.
+            $badgeMap = [
+                'pending' => 'warning',
+                'confirmed' => 'success',
+                'completed' => 'primary',
+                'cancelled' => 'danger',
+            ];
+
+            // Pick the next confirmed appointment for countdown.
+            $nextConfirmed = null;
+            foreach ($appointments as $appt) {
+                if (strtolower($appt['status']) === 'confirmed') {
+                    $nextConfirmed = $appt;
+                    break;
+                }
+            }
+            ?>
             <div class="col-12 col-lg-8">
                 <div class="card shadow-sm border-0 h-100">
                     <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
@@ -86,8 +135,19 @@
                                         <i class="bi bi-clock-history text-primary me-2"></i>
                                         <span class="fw-semibold">Upcoming Appointment</span>
                                     </div>
-                                    <p class="text-muted small mb-2">No appointment scheduled.</p>
-                                    <span class="badge bg-secondary">Pending</span>
+                                    <?php if ($nextConfirmed): ?>
+                                        <div class="text-muted small">Date: <?= esc($nextConfirmed['date']) ?></div>
+                                        <div class="text-muted small mb-2">Doctor: <?= esc($nextConfirmed['doctor']) ?></div>
+                                        <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                                            <span class="badge bg-<?= $badgeMap[strtolower($nextConfirmed['status'])] ?? 'secondary' ?> text-uppercase"><?= esc(ucfirst($nextConfirmed['status'])) ?></span>
+                                            <span class="small" id="countdown-label">Time remaining:</span>
+                                            <span class="small fw-semibold" id="countdown-timer">--</span>
+                                        </div>
+                                        <button class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#appointmentModal" data-appt='<?= json_encode($nextConfirmed) ?>'>View details</button>
+                                    <?php else: ?>
+                                        <p class="text-muted small mb-2">No confirmed appointment yet.</p>
+                                        <span class="badge bg-secondary">Pending</span>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                             <div class="col-12 col-md-6">
@@ -110,31 +170,28 @@
                         <h6 class="mb-0">Profile</h6>
                         <i class="bi bi-person-circle text-secondary"></i>
                     </div>
-                    <div class="card-body">
-                        <div class="d-flex align-items-center mb-3">
-                            <div class="icon-circle-small me-3"><i class="bi bi-person"></i></div>
+                    <div class="card-body py-3">
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="icon-circle-small me-2" style="width:32px;height:32px;"><i class="bi bi-person"></i></div>
                             <div>
-                                <div class="fw-semibold mb-1"><?= esc($user['name'] ?? 'Guest') ?></div>
-                                <div class="text-muted small mb-1"><?= esc($user['email'] ?? '') ?></div>
-                                <span class="badge bg-light text-dark text-uppercase"><?= esc($user['role'] ?? 'client') ?></span>
+                                <div class="fw-semibold mb-0 small"><?= esc($user['name'] ?? 'Guest') ?></div>
+                                <div class="text-muted xsmall mb-1"><?= esc($user['email'] ?? '') ?></div>
+                                <span class="badge bg-light text-dark text-uppercase xsmall">&nbsp;<?= esc($user['role'] ?? 'client') ?>&nbsp;</span>
                             </div>
                         </div>
-                        <ul class="list-group list-group-flush mb-3">
-                            <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
-                                Contact
-                                <span class="text-muted small">Add number</span>
-                            </li>
-                            <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
-                                Security
-                                <span class="text-muted small">Password not set</span>
-                            </li>
-                        </ul>
-                        <div class="d-grid gap-2">
-                            <button class="btn btn-outline-primary" type="button" disabled>Edit profile</button>
-                            <button class="btn btn-outline-secondary" type="button" disabled>Change password</button>
-                            <a class="btn btn-outline-danger" href="<?= site_url('logout') ?>">Logout</a>
+                        <div class="d-flex justify-content-between text-muted xsmall mb-1">
+                            <span>Contact</span>
+                            <span class="text-decoration-dotted">Add number</span>
                         </div>
-                        <p class="small text-muted mb-0 mt-2">Wire these actions to profile endpoints when ready.</p>
+                        <div class="d-flex justify-content-between text-muted xsmall mb-3">
+                            <span>Security</span>
+                            <span class="text-decoration-dotted">Password not set</span>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-outline-primary btn-sm" type="button" disabled>Edit profile</button>
+                            <button class="btn btn-outline-secondary btn-sm" type="button" disabled>Change password</button>
+                        </div>
+                        <p class="text-muted xsmall mb-0 mt-2">Wire these actions when endpoints exist.</p>
                     </div>
                 </div>
             </div>
@@ -200,9 +257,21 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr>
-                                        <td colspan="4" class="text-muted small text-center">No appointments yet.</td>
-                                    </tr>
+                                    <?php foreach ($appointments as $appt): ?>
+                                        <tr class="appt-row" role="button" data-bs-toggle="modal" data-bs-target="#appointmentModal" data-appt='<?= json_encode($appt) ?>'>
+                                            <td class="text-nowrap"><?= esc($appt['date']) ?></td>
+                                            <td><?= esc($appt['service']) ?></td>
+                                            <td>
+                                                <span class="badge bg-<?= $badgeMap[strtolower($appt['status'])] ?? 'secondary' ?> text-uppercase"><?= esc(ucfirst($appt['status'])) ?></span>
+                                            </td>
+                                            <td class="text-end">
+                                                <button class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#appointmentModal" data-appt='<?= json_encode($appt) ?>'>Details</button>
+                                                <?php if (strtolower($appt['status']) === 'completed'): ?>
+                                                    <button class="btn btn-outline-success btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#feedbackModal" data-appt='<?= json_encode($appt) ?>'>Leave Feedback</button>
+                                                <?php endif; ?>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
                                 </tbody>
                             </table>
                         </div>
@@ -243,6 +312,51 @@
             
         <?php endif; ?>
     </div>
+
+    <!-- Appointment Details Modal -->
+    <div class="modal fade" id="appointmentModal" tabindex="-1" aria-labelledby="appointmentModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="appointmentModalLabel">Appointment Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <dl class="row mb-0" id="appointmentDetails">
+                        <!-- Filled by JS -->
+                    </dl>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feedback Modal (UI only) -->
+    <div class="modal fade" id="feedbackModal" tabindex="-1" aria-labelledby="feedbackModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="feedbackModalLabel">Leave Feedback</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-2 small text-muted" id="feedbackApptLabel"></div>
+                    <div class="d-flex gap-2 mb-3" id="starContainer">
+                        <?php for ($i = 1; $i <= 5; $i++): ?>
+                            <button type="button" class="btn btn-outline-warning btn-sm star-btn" data-value="<?= $i ?>">★</button>
+                        <?php endfor; ?>
+                    </div>
+                    <div class="mb-3">
+                        <label for="feedbackNotes" class="form-label">Notes (optional)</label>
+                        <textarea id="feedbackNotes" class="form-control" rows="3" placeholder="Share your experience"></textarea>
+                    </div>
+                    <button type="button" class="btn btn-primary w-100" id="submitFeedback">Submit</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <style>
@@ -258,7 +372,97 @@
         justify-content: center;
         box-shadow: 0 10px 20px rgba(20, 184, 166, 0.2);
     }
+    .xsmall { font-size: 0.78rem; }
+    .star-btn.active { background-color: #f59e0b; color: #fff; border-color: #f59e0b; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Countdown timer for next confirmed appointment (hardcoded date from PHP array)
+    (function() {
+        const nextConfirmed = <?= json_encode($nextConfirmed ?? null) ?>;
+        const timerEl = document.getElementById('countdown-timer');
+        const labelEl = document.getElementById('countdown-label');
+        if (!nextConfirmed || !timerEl) return;
+
+        const target = new Date(nextConfirmed.date);
+        const tick = () => {
+            const now = new Date();
+            const diff = target - now;
+            if (diff <= 0) {
+                timerEl.textContent = 'Completed';
+                labelEl.textContent = '';
+                clearInterval(id);
+                return;
+            }
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+            timerEl.textContent = `${days}d ${hours}h remaining`;
+        };
+        const id = setInterval(tick, 60 * 1000); // update every minute
+        tick();
+    })();
+
+    // Populate appointment detail modal from data attributes
+    (function() {
+        const detailEls = document.querySelectorAll('[data-bs-target="#appointmentModal"]');
+        const detailContainer = document.getElementById('appointmentDetails');
+        if (!detailEls || !detailContainer) return;
+
+        detailEls.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const data = btn.getAttribute('data-appt');
+                if (!data) return;
+                const appt = JSON.parse(data);
+                detailContainer.innerHTML = `
+                    <dt class="col-4">Reference</dt><dd class="col-8">${appt.ref ?? ''}</dd>
+                    <dt class="col-4">Doctor</dt><dd class="col-8">${appt.doctor ?? ''}</dd>
+                    <dt class="col-4">Service</dt><dd class="col-8">${appt.service ?? ''}</dd>
+                    <dt class="col-4">Date & Time</dt><dd class="col-8">${appt.date ?? ''}</dd>
+                    <dt class="col-4">Clinic</dt><dd class="col-8">${appt.clinic ?? ''}</dd>
+                    <dt class="col-4">Notes</dt><dd class="col-8">${appt.notes ?? ''}</dd>
+                `;
+            });
+        });
+    })();
+
+    // Feedback modal: simple star toggle + alert demo
+    (function() {
+        const feedbackBtns = document.querySelectorAll('[data-bs-target="#feedbackModal"]');
+        const starButtons = () => Array.from(document.querySelectorAll('.star-btn'));
+        const submitBtn = document.getElementById('submitFeedback');
+        const feedbackLabel = document.getElementById('feedbackApptLabel');
+        let selected = 0;
+
+        const setStars = (val) => {
+            starButtons().forEach(btn => {
+                const v = Number(btn.dataset.value);
+                btn.classList.toggle('active', v <= val);
+            });
+            selected = val;
+        };
+
+        starButtons().forEach(btn => {
+            btn.addEventListener('click', () => setStars(Number(btn.dataset.value)));
+        });
+
+        feedbackBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const data = btn.getAttribute('data-appt');
+                const appt = data ? JSON.parse(data) : null;
+                if (feedbackLabel && appt) {
+                    feedbackLabel.textContent = `${appt.service ?? ''} with ${appt.doctor ?? ''}`;
+                }
+                setStars(0);
+                document.getElementById('feedbackNotes').value = '';
+            });
+        });
+
+        if (submitBtn) {
+            submitBtn.addEventListener('click', () => {
+                alert('Feedback submitted (demo only)');
+            });
+        }
+    })();
+</script>
 </body>
 </html>
